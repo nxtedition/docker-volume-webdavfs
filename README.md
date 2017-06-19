@@ -38,8 +38,8 @@ $ docker run -it -v davvolume:<path> busybox ls <path>
 
 ## THANKS
 
-https://github.com/docker/go-plugins-helpers
-https://github.com/vieux/docker-volume-sshfs as template for this repo
+- https://github.com/docker/go-plugins-helpers
+- https://github.com/vieux/docker-volume-sshfs as template for this repo
 
 ## LICENSE
 
