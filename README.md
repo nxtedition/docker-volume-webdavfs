@@ -16,12 +16,7 @@ $ docker plugin install fentas/davfs # or docker plugin install fentas/davfs DEB
 2 - Create a volume
 
 ```
-$ docker volume create -d fentas/davfs \
-  -o url=<server-url> \
-  -o username=<username> \
-  -o password=<password> \
-  -o [...] \
-  davvolume
+$ docker volume create -d fentas/davfs -o url=<https?://user:passwd@host/path> davvolume
 davvolume
 $ docker volume ls
 DRIVER              VOLUME NAME
@@ -33,7 +28,7 @@ local               e1496dfe4fa27b39121e4383d1b16a0a7510f0de89f05b336aab3c0deb4d
 fentas/davfs        davvolume
 ```
 
-**More options:** `mount.davfs --help`
+For more options refer to `mount.davfs --help`.
 
 3 - Use the volume
 
