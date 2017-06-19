@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,32 +18,41 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const socketAddress = "/run/docker/plugins/sshfs.sock"
+const socketAddress = "/run/docker/plugins/davfs.sock"
 
-type sshfsVolume struct {
-	Password string
-	Sshcmd   string
-	Port     string
+type davfsVolume struct {
+	URL      string
+	Conf     string
+	UID      uint64
+	GID      uint64
+	FileMode string
+	DirMode  string
+	Ro       bool
+	Rw       bool
+	Exec     bool
+	Suid     bool
+	Grpid    bool
+	Netdev   bool
 
 	Mountpoint  string
 	connections int
 }
 
-type sshfsDriver struct {
+type davfsDriver struct {
 	sync.RWMutex
 
 	root      string
 	statePath string
-	volumes   map[string]*sshfsVolume
+	volumes   map[string]*davfsVolume
 }
 
-func newSshfsDriver(root string) (*sshfsDriver, error) {
+func newdavfsDriver(root string) (*davfsDriver, error) {
 	logrus.WithField("method", "new driver").Debug(root)
 
-	d := &sshfsDriver{
+	d := &davfsDriver{
 		root:      filepath.Join(root, "volumes"),
-		statePath: filepath.Join(root, "state", "sshfs-state.json"),
-		volumes:   map[string]*sshfsVolume{},
+		statePath: filepath.Join(root, "state", "davfs-state.json"),
+		volumes:   map[string]*davfsVolume{},
 	}
 
 	data, err := ioutil.ReadFile(d.statePath)
@@ -61,7 +71,7 @@ func newSshfsDriver(root string) (*sshfsDriver, error) {
 	return d, nil
 }
 
-func (d *sshfsDriver) saveState() {
+func (d *davfsDriver) saveState() {
 	data, err := json.Marshal(d.volumes)
 	if err != nil {
 		logrus.WithField("statePath", d.statePath).Error(err)
@@ -73,30 +83,60 @@ func (d *sshfsDriver) saveState() {
 	}
 }
 
-func (d *sshfsDriver) Create(r volume.Request) volume.Response {
+func (d *davfsDriver) Create(r volume.Request) volume.Response {
 	logrus.WithField("method", "create").Debugf("%#v", r)
 
 	d.Lock()
 	defer d.Unlock()
-	v := &sshfsVolume{}
+	v := &davfsVolume{}
 
 	for key, val := range r.Options {
 		switch key {
-		case "sshcmd":
-			v.Sshcmd = val
-		case "password":
-			v.Password = val
-		case "port":
-			v.Port = val
+		case "url":
+			v.URL = val
+		case "conf":
+			v.Conf = val
+		case "uid":
+			u, err := strconv.ParseUint(val, 10, 64)
+			if err != nil {
+				return responseError("'uid' option must be int")
+			}
+			v.UID = u
+		case "gid":
+			u, err := strconv.ParseUint(val, 10, 64)
+			if err != nil {
+				return responseError("'uid' option must be int")
+			}
+			v.GID = u
+		case "file_mode":
+			v.FileMode = val
+		case "dir_mode":
+			v.DirMode = val
+		case "ro":
+			v.Ro = true
+		case "rw":
+			v.Rw = true
+		case "exec":
+			v.Exec = true
+		case "suid":
+			v.Suid = true
+		case "grpid":
+			v.Grpid = true
+		case "_netdav":
+			v.Netdev = true
 		default:
 			return responseError(fmt.Sprintf("unknown option %q", val))
 		}
 	}
 
-	if v.Sshcmd == "" {
-		return responseError("'sshcmd' option required")
+	if v.URL == "" {
+		return responseError("'url' option required")
 	}
-	v.Mountpoint = filepath.Join(d.root, fmt.Sprintf("%x", md5.Sum([]byte(v.Sshcmd))))
+	_, err := url.Parse(v.URL)
+	if err != nil {
+		return responseError("'url' option malformed")
+	}
+	v.Mountpoint = filepath.Join(d.root, fmt.Sprintf("%x", md5.Sum([]byte(v.URL))))
 
 	d.volumes[r.Name] = v
 
@@ -105,7 +145,7 @@ func (d *sshfsDriver) Create(r volume.Request) volume.Response {
 	return volume.Response{}
 }
 
-func (d *sshfsDriver) Remove(r volume.Request) volume.Response {
+func (d *davfsDriver) Remove(r volume.Request) volume.Response {
 	logrus.WithField("method", "remove").Debugf("%#v", r)
 
 	d.Lock()
@@ -127,7 +167,7 @@ func (d *sshfsDriver) Remove(r volume.Request) volume.Response {
 	return volume.Response{}
 }
 
-func (d *sshfsDriver) Path(r volume.Request) volume.Response {
+func (d *davfsDriver) Path(r volume.Request) volume.Response {
 	logrus.WithField("method", "path").Debugf("%#v", r)
 
 	d.RLock()
@@ -141,7 +181,7 @@ func (d *sshfsDriver) Path(r volume.Request) volume.Response {
 	return volume.Response{Mountpoint: v.Mountpoint}
 }
 
-func (d *sshfsDriver) Mount(r volume.MountRequest) volume.Response {
+func (d *davfsDriver) Mount(r volume.MountRequest) volume.Response {
 	logrus.WithField("method", "mount").Debugf("%#v", r)
 
 	d.Lock()
@@ -176,7 +216,7 @@ func (d *sshfsDriver) Mount(r volume.MountRequest) volume.Response {
 	return volume.Response{Mountpoint: v.Mountpoint}
 }
 
-func (d *sshfsDriver) Unmount(r volume.UnmountRequest) volume.Response {
+func (d *davfsDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	logrus.WithField("method", "unmount").Debugf("%#v", r)
 
 	d.Lock()
@@ -198,7 +238,7 @@ func (d *sshfsDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	return volume.Response{}
 }
 
-func (d *sshfsDriver) Get(r volume.Request) volume.Response {
+func (d *davfsDriver) Get(r volume.Request) volume.Response {
 	logrus.WithField("method", "get").Debugf("%#v", r)
 
 	d.Lock()
@@ -212,7 +252,7 @@ func (d *sshfsDriver) Get(r volume.Request) volume.Response {
 	return volume.Response{Volume: &volume.Volume{Name: r.Name, Mountpoint: v.Mountpoint}}
 }
 
-func (d *sshfsDriver) List(r volume.Request) volume.Response {
+func (d *davfsDriver) List(r volume.Request) volume.Response {
 	logrus.WithField("method", "list").Debugf("%#v", r)
 
 	d.Lock()
@@ -225,26 +265,65 @@ func (d *sshfsDriver) List(r volume.Request) volume.Response {
 	return volume.Response{Volumes: vols}
 }
 
-func (d *sshfsDriver) Capabilities(r volume.Request) volume.Response {
+func (d *davfsDriver) Capabilities(r volume.Request) volume.Response {
 	logrus.WithField("method", "capabilities").Debugf("%#v", r)
 
 	return volume.Response{Capabilities: volume.Capability{Scope: "local"}}
 }
 
-func (d *sshfsDriver) mountVolume(v *sshfsVolume) error {
-	cmd := exec.Command("sshfs", "-oStrictHostKeyChecking=no", v.Sshcmd, v.Mountpoint)
-	if v.Port != "" {
-		cmd.Args = append(cmd.Args, "-p", v.Port)
+func (d *davfsDriver) mountVolume(v *davfsVolume) error {
+	u, err := url.Parse(v.URL)
+	if err != nil {
+		log.Fatal(err)
 	}
-	if v.Password != "" {
-		cmd.Args = append(cmd.Args, "-p", v.Port, "-o", "workaround=rename", "-o", "password_stdin")
-		cmd.Stdin = strings.NewReader(v.Password)
+
+	cmd := exec.Command("mount.davfs", fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path), v.Mountpoint)
+
+	if v.Conf != "" {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("conf=%s", v.Conf))
 	}
+	if v.UID != 0 {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("uid=%d", v.UID))
+	}
+	if v.GID != 0 {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("gid=%d", v.GID))
+	}
+	if v.FileMode != "" {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("file_mode=%s", v.FileMode))
+	}
+	if v.DirMode != "" {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("dir_mode=%s", v.DirMode))
+	}
+	if v.Ro {
+		cmd.Args = append(cmd.Args, "-o", "ro")
+	}
+	if v.Rw {
+		cmd.Args = append(cmd.Args, "-o", "rw")
+	}
+	if v.Exec {
+		cmd.Args = append(cmd.Args, "-o", "exec")
+	}
+	if v.Suid {
+		cmd.Args = append(cmd.Args, "-o", "suid")
+	}
+	if v.Grpid {
+		cmd.Args = append(cmd.Args, "-o", "grpid")
+	}
+	if v.Netdev {
+		cmd.Args = append(cmd.Args, "-o", "_netdev")
+	}
+
+	username := u.User.Username()
+	if username != "" {
+		password, _ := u.User.Password()
+		cmd.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", username, password))
+	}
+
 	logrus.Debug(cmd.Args)
 	return cmd.Run()
 }
 
-func (d *sshfsDriver) unmountVolume(target string) error {
+func (d *davfsDriver) unmountVolume(target string) error {
 	cmd := fmt.Sprintf("umount %s", target)
 	logrus.Debug(cmd)
 	return exec.Command("sh", "-c", cmd).Run()
@@ -261,7 +340,7 @@ func main() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	d, err := newSshfsDriver("/mnt")
+	d, err := newdavfsDriver("/mnt")
 	if err != nil {
 		log.Fatal(err)
 	}

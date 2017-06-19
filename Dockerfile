@@ -1,9 +1,9 @@
-FROM alpine
+FROM alpine:3.6
 
-RUN apk update && apk add sshfs
+RUN apk add --no-cache davfs2
 
 RUN mkdir -p /run/docker/plugins /mnt/state /mnt/volumes
 
-COPY docker-volume-sshfs docker-volume-sshfs
+COPY docker-volume-davfs docker-volume-davfs
 
-CMD ["docker-volume-sshfs"]
+CMD ["docker-volume-davfs"]

@@ -1,4 +1,4 @@
-PLUGIN_NAME=vieux/sshfs
+PLUGIN_NAME=fentas/davfs
 PLUGIN_TAG=next
 
 all: clean docker rootfs create
@@ -10,12 +10,12 @@ clean:
 docker:
 	@echo "### docker build: builder image"
 	@docker build -q -t builder -f Dockerfile.dev .
-	@echo "### extract docker-volume-sshfs"
+	@echo "### extract docker-volume-davfs"
 	@docker create --name tmp builder
-	@docker cp tmp:/go/bin/docker-volume-sshfs .
+	@docker cp tmp:/go/bin/docker-volume-davfs .
 	@docker rm -vf tmp
 	@docker rmi builder
-	@echo "### docker build: rootfs image with docker-volume-sshfs"
+	@echo "### docker build: rootfs image with docker-volume-davfs"
 	@docker build -q -t ${PLUGIN_NAME}:rootfs .
 
 rootfs:

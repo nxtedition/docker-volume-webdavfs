@@ -1,8 +1,8 @@
 {
-    "description": "sshFS plugin for Docker",
+    "description": "davfs plugin for Docker",
     "documentation": "https://docs.docker.com/engine/extend/plugins/",
     "entrypoint": [
-        "/docker-volume-sshfs"
+        "/docker-volume-davfs"
     ],
     "env": [
         {
@@ -14,7 +14,7 @@
         }
     ],
     "interface": {
-        "socket": "sshfs.sock",
+        "socket": "davfs.sock",
         "types": [
             "docker.volumedriver/1.0"
         ]
