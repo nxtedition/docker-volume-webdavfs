@@ -23,8 +23,8 @@ const socketAddress = "/run/docker/plugins/davfs.sock"
 type davfsVolume struct {
 	URL      string
 	Conf     string
-	UID      uint64
-	GID      uint64
+	UID      string
+	GID      string
 	FileMode string
 	DirMode  string
 	Ro       bool
@@ -97,17 +97,9 @@ func (d *davfsDriver) Create(r volume.Request) volume.Response {
 		case "conf":
 			v.Conf = val
 		case "uid":
-			u, err := strconv.ParseUint(val, 10, 64)
-			if err != nil {
-				return responseError("'uid' option must be int")
-			}
-			v.UID = u
+			v.UID = val
 		case "gid":
-			u, err := strconv.ParseUint(val, 10, 64)
-			if err != nil {
-				return responseError("'uid' option must be int")
-			}
-			v.GID = u
+			v.GID = val
 		case "file_mode":
 			v.FileMode = val
 		case "dir_mode":
@@ -282,11 +274,11 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	if v.Conf != "" {
 		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("conf=%s", v.Conf))
 	}
-	if v.UID != 0 {
-		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("uid=%d", v.UID))
+	if v.UID != "" {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("uid=%s", v.UID))
 	}
-	if v.GID != 0 {
-		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("gid=%d", v.GID))
+	if v.GID != "" {
+		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("gid=%s", v.GID))
 	}
 	if v.FileMode != "" {
 		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("file_mode=%s", v.FileMode))
