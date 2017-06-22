@@ -9,14 +9,17 @@ This plugin allows you to mount remote folder using sshfs in your container easi
 
 1 - Install the plugin
 
-```
-$ docker plugin install fentas/davfs # or docker plugin install fentas/davfs DEBUG=1
+```sh
+docker plugin install fentas/davfs # or docker plugin install fentas/davfs DEBUG=1
 ```
 
 2 - Create a volume
 
-```
-$ docker volume create -d fentas/davfs -o url=<https?://user:passwd@host/path> davvolume
+```sh
+$ docker volume create \
+  -d fentas/davfs \
+  -o url=<https?://user:passwd@host/path> \
+  -o uid=1000 -o gid=1000 davvolume
 davvolume
 $ docker volume ls
 DRIVER              VOLUME NAME
@@ -35,6 +38,23 @@ For more options refer to `mount.davfs --help`.
 ```
 $ docker run -it -v davvolume:<path> busybox ls <path>
 ```
+
+## Global `/etc/webdav/webdav.conf` atm.
+```ini
+dav_user        root
+dav_group       root
+kernel_fs       fuse
+buf_size        16
+connect_timeout 10
+read_timeout    30
+retry           10
+max_retry       300
+dir_refresh     30
+# file_refresh    10
+```
+
+## TODO
+- [ ] set custom `webdav.conf`
 
 ## THANKS
 

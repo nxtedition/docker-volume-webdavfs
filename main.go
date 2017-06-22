@@ -275,9 +275,11 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("conf=%s", v.Conf))
 	}
 	if v.UID != "" {
+		exec.Command("adduser", "-S", "-u", v.UID, v.UID).Run()
 		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("uid=%s", v.UID))
 	}
 	if v.GID != "" {
+		exec.Command("addgroup", "-S", "-g", v.GID, v.GID).Run()
 		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("gid=%s", v.GID))
 	}
 	if v.FileMode != "" {
