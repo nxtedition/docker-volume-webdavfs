@@ -22,6 +22,8 @@ const socketAddress = "/run/docker/plugins/davfs.sock"
 
 type davfsVolume struct {
 	URL      string
+	Username string
+	Password string
 	Conf     string
 	UID      string
 	GID      string
@@ -94,6 +96,10 @@ func (d *davfsDriver) Create(r *volume.CreateRequest) error {
 		switch key {
 		case "url":
 			v.URL = val
+		case "username":
+			v.Username = val
+		case "password":
+			v.Password = val
 		case "conf":
 			v.Conf = val
 		case "uid":
@@ -262,10 +268,13 @@ func (d *davfsDriver) Capabilities() *volume.CapabilitiesResponse {
 }
 
 func (d *davfsDriver) mountVolume(v *davfsVolume) error {
+	logrus.WithField("method", "mountVolume").Debugf("%#v", v)
+
 	u, err := url.Parse(v.URL)
 	if err != nil {
 		log.Fatal(err)
 	}
+	logrus.WithField("method", "mountVolume").WithField("variable", "url").Debugf("%#v", u)
 
 	cmd := exec.Command("mount.davfs", fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path), v.Mountpoint)
 
@@ -305,10 +314,12 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 		cmd.Args = append(cmd.Args, "-o", "_netdev")
 	}
 
-	username := u.User.Username()
-	if username != "" {
+	if u.User != nil {
+		username := u.User.Username()
 		password, _ := u.User.Password()
 		cmd.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", username, password))
+	} else if v.Username != "" {
+		cmd.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", v.Username, v.Password))
 	}
 
 	logrus.Debug(cmd.Args)

@@ -31,6 +31,9 @@ local               e1496dfe4fa27b39121e4383d1b16a0a7510f0de89f05b336aab3c0deb4d
 fentas/davfs        davvolume
 ```
 
+**NOTE:** If you have special characters within your username or/and password you can use `-o username=<user>` and `-o password=<password>`.
+You can check if your url is correctly parsed here: https://play.golang.org/p/JBtsIJjURsK
+
 For more options refer to `mount.davfs --help`.
 
 3 - Use the volume
