@@ -1,16 +1,28 @@
 ---
-  language: go
-  sudo: false
   notifications:
     email: false
-  go:
-    - 1.6.x
-    - 1.7.x
-    - master
-  install:
-    - go get github.com/golang/lint/golint
+
+  matrix:
+    include:
+      - language: go
+        go: 1.8.x
+        env: TESTFILE=unit.sh
+      - language: go
+        go: 1.9.x
+        env: TESTFILE=unit.sh
+      - language: go
+        go: master
+        env: TESTFILE=unit.sh
+      - language: generic
+        sudo: required
+        services:
+          - docker
+        before_install:
+          - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          - sudo apt-get update
+          - sudo apt-get -y install docker-ce
+        env: TESTFILE=integration.sh
+
   script:
-    - test -z "$(go vet ./... | grep -v vendor/ | tee /dev/stderr)"
-    - test -z "$(golint ./... | grep -v vendor/ | tee /dev/stderr)"
-    - test -z "$(gofmt -s -l . | grep -v vendor/ | tee /dev/stderr)"
-    - go list ./... | go test -v
+    - ./.travis/$TESTFILE
