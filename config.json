@@ -1,46 +1,50 @@
 {
-    "description": "davfs plugin for Docker",
-    "documentation": "https://docs.docker.com/engine/extend/plugins/",
-    "entrypoint": [
-        "/docker-volume-davfs"
+  "description": "davfs plugin for Docker",
+  "documentation": "https://docs.docker.com/engine/extend/plugins/",
+  "entrypoint": [
+    "/docker-volume-davfs"
+  ],
+  "env": [
+    {
+      "name": "DEBUG",
+      "settable": [
+        "value"
+      ],
+      "value": "0"
+    }
+  ],
+  "interface": {
+    "socket": "davfs.sock",
+    "types": [
+      "docker.volumedriver/1.0"
+    ]
+  },
+  "linux": {
+    "capabilities": [
+      "CAP_SYS_ADMIN"
     ],
-    "env": [
-        {
-            "name": "DEBUG",
-            "settable": [
-                "value"
-            ],
-            "value": "0"
-        }
-    ],
-    "interface": {
-        "socket": "davfs.sock",
-        "types": [
-            "docker.volumedriver/1.0"
-        ]
-    },
-    "linux": {
-        "capabilities": [
-            "CAP_SYS_ADMIN"
-        ],
-        "devices": [
-            {
-                "path": "/dev/fuse"
-            }
-        ]
-    },
-    "mounts": [
-        {
-            "destination": "/mnt/state",
-            "options": [
-                "rbind"
-            ],
-            "source": "/var/lib/docker/plugins/",
-            "type": "bind"
-        }
-    ],
-    "network": {
-        "type": "host"
-    },
-    "propagatedmount": "/mnt/volumes"
+    "devices": [
+      {
+        "path": "/dev/fuse"
+      }
+    ]
+  },
+  "mounts": [
+    {
+      "destination": "/mnt/state",
+      "options": [
+        "rbind"
+      ],
+      "name": "state",
+      "source": "/var/lib/docker/plugins/",
+      "settable": [
+        "source"
+      ],
+      "type": "bind"
+    }
+  ],
+  "network": {
+    "type": "host"
+  },
+  "propagatedmount": "/mnt/volumes"
 }

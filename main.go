@@ -342,8 +342,6 @@ func main() {
 	if ok, _ := strconv.ParseBool(debug); ok {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	// set debug anyhow
-	logrus.SetLevel(logrus.DebugLevel)
 
 	// make sure "/etc/davfs2/secrets" is owned by root
 	err := os.Chown("/etc/davfs2/secrets", 0, 0)

@@ -18,7 +18,7 @@ docker plugin install fentas/davfs # or docker plugin install fentas/davfs DEBUG
 ```sh
 $ docker volume create \
   -d fentas/davfs \
-  -o url=<https?://user:passwd@host/path> \
+  -o url=<https://user:passwd@host/path> \
   -o uid=1000 -o gid=1000 davvolume
 davvolume
 $ docker volume ls
