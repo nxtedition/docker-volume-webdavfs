@@ -1,6 +1,6 @@
 # Docker volume plugin for davfs
 
-This plugin allows you to mount remote folder using sshfs in your container easily.
+This plugin allows you to mount remote folder using davfs2 in your container easily.
 
 [![TravisCI](https://travis-ci.org/fentas/docker-volume-davfs.svg)](https://travis-ci.org/fentas/docker-volume-davfs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fentas/docker-volume-davfs)](https://goreportcard.com/report/github.com/fentas/docker-volume-davfs)
