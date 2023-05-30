@@ -9,5 +9,5 @@ RUN     go get -d github.com/LK4D4/vndr && \
         go build -v -o /usr/bin/vndr . && \
         rm -rf /go/src/* /go/pkg/* /go/bin/*
 
-WORKDIR /go/src/github.com/fentas/docker-volume-davfs
+WORKDIR /go/src/github.com/nxtedition/docker-volume-webdavfs
 CMD     sh

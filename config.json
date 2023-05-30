@@ -1,8 +1,8 @@
 {
-  "description": "davfs plugin for Docker",
+  "description": "webdavfs plugin for Docker",
   "documentation": "https://docs.docker.com/engine/extend/plugins/",
   "entrypoint": [
-    "/docker-volume-davfs"
+    "/docker-volume-webdavfs"
   ],
   "env": [
     {
@@ -14,7 +14,7 @@
     }
   ],
   "interface": {
-    "socket": "davfs.sock",
+    "socket": "webdavfs.sock",
     "types": [
       "docker.volumedriver/1.0"
     ]

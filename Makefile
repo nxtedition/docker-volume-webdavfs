@@ -1,8 +1,8 @@
-PLUGIN_NAME=fentas/davfs
+PLUGIN_NAME=nxtedition/webdavfs
 PLUGIN_TAG=latest
 
 DEV_DOCKER_IMAGE_NAME = docker-cli-dev$(IMAGE_TAG)
-MOUNTS = -v "$(CURDIR)":/go/src/github.com/fentas/docker-volume-davfs
+MOUNTS = -v "$(CURDIR)":/go/src/github.com/nxtedition/docker-volume-webdavfs
 
 all: clean rootfs create
 
@@ -11,7 +11,7 @@ clean:
 	@rm -rf ./plugin
 
 rootfs: clean
-	@echo "### docker build: rootfs image with docker-volume-davfs"
+	@echo "### docker build: rootfs image with docker-volume-webdavfs"
 	@docker build -q -t ${PLUGIN_NAME}:rootfs .
 	@echo "### create rootfs directory in ./plugin/rootfs"
 	@mkdir -p ./plugin/rootfs
