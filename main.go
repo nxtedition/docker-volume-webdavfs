@@ -343,12 +343,6 @@ func main() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	// make sure "/etc/webdavfs2/secrets" is owned by root
-	err := os.Chown("/etc/webdavfs2/secrets", 0, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	d, err := newwebdavfsDriver("/mnt")
 	if err != nil {
 		log.Fatal(err)
